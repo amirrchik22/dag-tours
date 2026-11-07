@@ -105,7 +105,7 @@ export function create(stage, opts) {
   // старт машины: ближайшая выборка к (0,0,20) — позади ещё ~90 м асфальта, чтобы дорога не начиналась из грунта
   var startIdx = 0; (function () { var b = 1e18; for (var i = 0; i <= SAMPLES; i++) { var d = samples[i].distanceToSquared(P[2]); if (d < b) { b = d; startIdx = i; } } })();
   var u0 = startIdx / SAMPLES;
-  var S = [0.03, 0.17, 0.32, 0.47, 0.6, 0.72].map(function (s) { return u0 + s * (1 - u0); });   // доли пути: остановки по дням (дорога до полосы)
+  var S = [0.075, 0.17, 0.32, 0.47, 0.6, 0.72].map(function (s) { return u0 + s * (1 - u0); });   // доли пути: остановки по дням (дорога до полосы)
 
   function nearestRoad(x, z) {
     var best = 1e18, bi = 0;
@@ -763,7 +763,7 @@ export function create(stage, opts) {
     var look = car.position.clone().addScaledVector(tmpT, 9 + 20 * lift); look.y += 1.1 + 2.6 * morph + 2 * lift;
     // фокус камеры: у знака — взгляд на знак, на остановке — билборд в кадре целиком
     var focusFov = 0, fp = new THREE.Vector3();
-    var vert = camera.aspect < 0.9, lead = vert ? 22 : 0, fw8 = 1;   // вертикальный экран: фокус на знаке раньше, пока он впереди — и машина, и знак в кадре
+    var vert = camera.aspect < 0.9, lead = vert ? 22 : 14, fw8 = 1;   // вертикальный экран: фокус на знаке раньше, пока он впереди — и машина, и знак в кадре
     for (var si = 0; si < S.length; si++) {
       var us = Math.max(0.005, S[si] - 35 / roadLen);
       // плато: полный фокус в пределах +-6 м у знака и +-9 м у щита, потом плавный спад
