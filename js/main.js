@@ -483,7 +483,8 @@
   // после перезагрузки браузер восстанавливает прокрутку без события scroll — проверяем сами
   window.addEventListener('load', onScroll); window.addEventListener('pageshow', onScroll); setTimeout(onScroll, 400); onScroll();
   var rt;
-  window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(setup, 150); });
+  var lastW = window.innerWidth;   // на телефоне resize прилетает при каждом показе адресной строки — пересобираем только при смене ширины
+  window.addEventListener('resize', function () { if (window.innerWidth === lastW) return; lastW = window.innerWidth; clearTimeout(rt); rt = setTimeout(setup, 150); });
 
 /* липкая нижняя панель: не висит над формой брони и над клавиатурой */
 (function () {

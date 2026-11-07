@@ -20,9 +20,9 @@ function smooth(t) { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); }
 export function create(stage, opts) {
   var lite = !!opts.lite;
   var canvas = stage.querySelector('.film__gl');
-  var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: !lite, powerPreference: lite ? 'low-power' : 'default' });
+  var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, powerPreference: lite ? 'low-power' : 'default' });
   canvas.addEventListener('webglcontextlost', function (e) { e.preventDefault(); if (opts.onLost) opts.onLost(); });
-  renderer.setPixelRatio(lite ? 1 : Math.min(window.devicePixelRatio || 1, 1.25));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, lite ? 2 : 1.25));   // телефон: чёткая картинка (слабые отсекает замер кадров)
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.06;
@@ -139,13 +139,13 @@ export function create(stage, opts) {
     var far = smooth((d - 40) / 190);
     var hills = fbm(x, z) * 14;
     var mountains = (ridge(x, z) - 0.35) * (22 + 150 * far);
-    return r.y - 0.14 * (1 - blend) + slope * rise + (hills + mountains * (0.2 + 0.8 * far)) * blend;   // у полотна грунт чуть ниже асфальта
+    return r.y - (lite ? 0.45 : 0.14) * (1 - blend) + slope * rise + (hills + mountains * (0.2 + 0.8 * far)) * blend;   // у полотна грунт чуть ниже асфальта
   }
 
   /* ---------- рельеф ---------- */
   var box = new THREE.Box3().setFromPoints(samples);
   var minX = box.min.x - (lite ? 250 : 380), maxX = box.max.x + (lite ? 250 : 380), minZ = box.min.z - (lite ? 260 : 380), maxZ = box.max.z + (lite ? 120 : 180);
-  var cell = lite ? 9 : 4.8;
+  var cell = lite ? 6 : 4.8;
   var nx = Math.ceil((maxX - minX) / cell), nz = Math.ceil((maxZ - minZ) / cell);
   var tg = new THREE.PlaneGeometry(maxX - minX, maxZ - minZ, nx, nz);
   tg.rotateX(-Math.PI / 2);
@@ -225,9 +225,9 @@ export function create(stage, opts) {
     g.save(); g.translate(256, 0); g.scale(-1, 1); g.font = 'bold 110px Arial'; g.textAlign = 'center'; g.fillText('27', 128, 330); g.restore();
     var t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = lite ? 2 : 8; return t;
   })();
-  var shoulder = new THREE.Mesh(ribbon(10.5, 0.03, 0, uRun, 600, roadLen * uRun / 14), new THREE.MeshLambertMaterial({ color: 0xbfb08d }));
+  var shoulder = new THREE.Mesh(ribbon(10.5, lite ? 0.1 : 0.03, 0, uRun, 600, roadLen * uRun / 14), new THREE.MeshLambertMaterial({ color: 0xbfb08d, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }));
   shoulder.receiveShadow = true; scene.add(shoulder);
-  var road = new THREE.Mesh(ribbon(7.2, 0.08, 0, uRun, 1000, roadLen * uRun / 14), new THREE.MeshStandardMaterial({ map: roadTex, roughness: 0.95 }));
+  var road = new THREE.Mesh(ribbon(7.2, lite ? 0.18 : 0.08, 0, uRun, 1000, roadLen * uRun / 14), new THREE.MeshStandardMaterial({ map: roadTex, roughness: 0.95, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }));
   road.receiveShadow = true; scene.add(road);
   var runway = new THREE.Mesh(ribbon(0, 0.09, uRun - 0.004, 1, 220, 1, function (u) { return 7.2 + 20 * smooth((u - uRun + 0.004) / 0.03); }), new THREE.MeshStandardMaterial({ map: runTex, roughness: 0.9 }));
   runway.receiveShadow = true; scene.add(runway);
@@ -322,7 +322,7 @@ export function create(stage, opts) {
     // знак за 35 м до остановки
     var us = Math.max(0.005, u - 35 / roadLen), p = curve.getPointAt(us), t = curve.getTangentAt(us);
     var nrm = new THREE.Vector3().crossVectors(up, t).normalize();
-    var g = new THREE.Group(); var base = p.clone().addScaledVector(nrm, 5.4); base.y = terrainY(base.x, base.z) + 0.1; g.position.copy(base);
+    var g = new THREE.Group(); var base = p.clone().addScaledVector(nrm, lite ? 4.8 : 5.4); base.y = terrainY(base.x, base.z) + 0.1; g.position.copy(base);
     var lk = base.clone().addScaledVector(t, -20); lk.y = base.y; g.lookAt(lk);
     var tex = textTexture(512, 192, function (c) {
       c.fillStyle = '#1b5fae'; c.fillRect(0, 0, 512, 192); c.strokeStyle = '#ffffff'; c.lineWidth = 8; c.strokeRect(10, 10, 492, 172);
@@ -333,11 +333,12 @@ export function create(stage, opts) {
     var sign = new THREE.Mesh(new THREE.BoxGeometry(4.2, 1.6, 0.1), [null, null, null, null, new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6 }), new THREE.MeshStandardMaterial({ color: 0x8a8f94 })].map(function (m) { return m || new THREE.MeshStandardMaterial({ color: 0x8a8f94 }); }));
     sign.position.set(0, 3.2, 0); sign.castShadow = !lite; g.add(sign);
     var post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 2.6, 6), new THREE.MeshStandardMaterial({ color: 0x9aa0a6 })); post.position.set(0, 1.3, 0); g.add(post);
+    if (lite) g.scale.setScalar(1.35);
     scene.add(g); signs.push(g);
     // билборд: на стальной стойке в стороне от дороги, впереди остановки, повёрнут к водителю
     var ub = u + (lite ? 30 : 26) / roadLen, pb = curve.getPointAt(ub), tb = curve.getTangentAt(ub);
     var nb = new THREE.Vector3().crossVectors(up, tb).normalize();
-    var gb = new THREE.Group(); var bb = pb.clone().addScaledVector(nb, -12.5); bb.y = terrainY(bb.x, bb.z);
+    var gb = new THREE.Group(); var bb = pb.clone().addScaledVector(nb, lite ? -9 : -12.5); bb.y = terrainY(bb.x, bb.z);
     gb.position.copy(bb);
     var lb = bb.clone().addScaledVector(tb, -30).addScaledVector(nb, 9); lb.y = bb.y; gb.lookAt(lb);
     var steel = new THREE.MeshStandardMaterial({ color: 0x6b7278, metalness: 0.7, roughness: 0.45 });
@@ -762,16 +763,16 @@ export function create(stage, opts) {
     var look = car.position.clone().addScaledVector(tmpT, 9 + 20 * lift); look.y += 1.1 + 2.6 * morph + 2 * lift;
     // фокус камеры: у знака — взгляд на знак, на остановке — билборд в кадре целиком
     var focusFov = 0, fp = new THREE.Vector3();
-    var fw8 = camera.aspect < 1 ? 0.4 : 1;   // на вертикальном экране взгляд уводим меньше — машина остаётся в кадре
+    var vert = camera.aspect < 0.9, lead = vert ? 22 : 0, fw8 = 1;   // вертикальный экран: фокус на знаке раньше, пока он впереди — и машина, и знак в кадре
     for (var si = 0; si < S.length; si++) {
       var us = Math.max(0.005, S[si] - 35 / roadLen);
       // плато: полный фокус в пределах +-6 м у знака и +-9 м у щита, потом плавный спад
-      var ds = Math.abs(u - us) * roadLen, db = Math.abs(u - S[si]) * roadLen;
+      var ds = Math.abs(u - (us - lead / roadLen)) * roadLen, db = Math.abs(u - S[si]) * roadLen;
       var fs = clamp(1 - Math.max(0, ds - 6) / 22, 0, 1), fb = clamp(1 - Math.max(0, db - 9) / 20, 0, 1);
       fs = fs * fs * (3 - 2 * fs); fb = fb * fb * (3 - 2 * fb);
-      if (fs > 0 && signs[si]) { fp.copy(signs[si].position); fp.y += 3.0; look.lerp(fp, fs * 0.75 * fw8); focusFov += 10 * fs; }
+      if (fs > 0 && signs[si]) { fp.copy(signs[si].position); fp.y += 3.0; look.lerp(fp, fs * (vert ? 1 : 0.75)); focusFov += 10 * fs; }
       if (fb > 0 && boards[si]) {
-        boards[si].localToWorld(fp.set(0, 8.2, 0)); look.lerp(fp, fb * 0.8 * fw8); focusFov += (lite ? 22 : 19) * fb;
+        boards[si].localToWorld(fp.set(0, 8.2, 0)); look.lerp(fp, fb * (vert ? 1 : 0.8)); focusFov += (lite ? 22 : 19) * fb;
         // камера подъезжает ближе и поднимается, чтобы щит занял кадр
         desired.y += 2.4 * fb; desired.addScaledVector(tmpN, 3.2 * fb); desired.addScaledVector(tmpT, 2.5 * fb);
       }
