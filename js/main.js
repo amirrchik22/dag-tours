@@ -440,9 +440,12 @@
   var glParam = /[?&]gl=(\d)/.exec(location.search);
   var conn = navigator.connection || {};
   var slowNet = !!conn.saveData || /(^|-)2g|3g/.test(conn.effectiveType || '');
-  var strongPhone = (navigator.deviceMemory || 4) >= 4 && (navigator.hardwareConcurrency || 4) >= 6;
+  // iPhone/iPad: Safari не сообщает память и занижает число ядер, а графика у них сильная — пускаем в 3D,
+  // слабые модели отсеет замер кадров (onPerf). Android: от 4 ГБ памяти и 6 ядер.
+  var isApple = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var strongPhone = isApple || ((navigator.deviceMemory || 4) >= 4 && (navigator.hardwareConcurrency || 4) >= 6);
   var lite = coarse || window.innerWidth < 900;
-  var remembered = null; try { remembered = localStorage.getItem('dt-gl'); } catch (e) {}
+  var remembered = null; try { if (glParam && glParam[1] === '1') localStorage.removeItem('dt-gl'); remembered = localStorage.getItem('dt-gl'); } catch (e) {}
   function hasWebGL() {
     try { var c = document.createElement('canvas'); var g = c.getContext('webgl2') || c.getContext('webgl'); if (!g) return false; var x = g.getExtension('WEBGL_lose_context'); if (x) x.loseContext(); return true; } catch (e) { return false; }
   }

@@ -858,3 +858,5 @@ html:has(dialog[open]) { overflow: hidden; }
 }
 .film__grain { inset: -10%; width: 120%; height: 120%; }
 #faq, #reviews, #team, #oneday, #comfort, #custom { content-visibility: auto; contain-intrinsic-size: auto 900px; }
+/* день 0: вывеска «Каспийск» в кадре на вертикальном экране */
+.scene:first-child img { object-position: 100% 42%; transform-origin: 88% 38%; }
