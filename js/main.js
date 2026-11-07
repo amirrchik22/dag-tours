@@ -188,7 +188,7 @@
   var svg, path, done, car, body, shadow, stops, notes, finish, S, len, W, H, mobile, plane;
   var K = coarse ? 0.18 : 0.12;
   var p = 0, pv = 0, raf = 0, active = -1, onStop = false, prevAng = 0, lean = 0, sPrev = 0, vPrev = 0;
-  var passed = false, collapsed = false, lastY = window.scrollY, lastNavY = lastY;   // ушли вниз и вернулись — фильм не крутим назад
+  var collapseT = 0, passed = false, collapsed = false, lastY = window.scrollY, lastNavY = lastY;   // ушли вниз и вернулись — фильм не крутим назад
 
   function pickSvg() {
     var all = film.querySelectorAll('svg.road__wide, svg.road__tall');
@@ -267,6 +267,7 @@
     var rect = track.getBoundingClientRect();
     var total = rect.height - window.innerHeight;
     if (total < 2) return collapsed ? 1 : 0;
+    if (passed) return 1;   // вернулись снизу, но ещё не свернули — держим финальный кадр, без реверса
     return Math.min(1, Math.max(0, -rect.top / total));
   }
   // свёрнутый фильм: дорожка в один экран, показываем финальный кадр; страницу под нами не дёргаем
@@ -418,8 +419,13 @@
     var y = window.scrollY, goingUp = y < lastY; lastY = y;
     var fr = film.getBoundingClientRect(), vh = window.innerHeight;
     if (fr.bottom < 0) passed = true;                                // блок целиком ушёл вверх — назад его не крутим
-    if (fr.top > vh) { passed = false; if (collapsed) { setCollapsed(false); snapFilm(); } }   // блок целиком ниже экрана — разворачиваем невидимо, машина на старте
-    else if (passed && goingUp && !collapsed) { setCollapsed(true); snapFilm(); }               // возвращаемся снизу — один экран с финальным кадром
+    if (fr.top > vh) { passed = false; if (collapsed) { setCollapsed(false); snapFilm(); } }   // блок целиком ниже экрана — разворачиваем (это ниже экрана, прокрутку не трогает)
+    // Свернуть фильм можно только когда прокрутка стоит: на iPhone во время инерции Safari
+    // игнорирует программный сдвиг прокрутки, и страница улетала на ~8000 px вперёд.
+    clearTimeout(collapseT);
+    if (passed && !collapsed) collapseT = setTimeout(function () {
+      if (passed && !collapsed && film.getBoundingClientRect().bottom < 0) { setCollapsed(true); snapFilm(); }
+    }, 250);
     p = progress();
     document.body.classList.toggle('past-hero', window.scrollY > window.innerHeight * 0.7);
     // телефон: шапка прячется при прокрутке вниз и возвращается при прокрутке вверх
