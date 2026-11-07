@@ -587,7 +587,7 @@ export function create(stage, opts) {
   var fwLife = new Float32Array(FW_MAX), fwMax = new Float32Array(FW_MAX), fwKind = new Uint8Array(FW_MAX), fwCount = 0, fwNext = 0.8;
   var fwGeo = new THREE.BufferGeometry(); fwGeo.setAttribute('position', new THREE.BufferAttribute(fwPos, 3)); fwGeo.setAttribute('color', new THREE.BufferAttribute(fwCol, 3)); fwGeo.setDrawRange(0, 0);
   var fwMat = new THREE.PointsMaterial({ size: lite ? 0.5 : 0.42, map: glowTexture('rgba(255,255,255,1)', 'rgba(255,255,255,0)'), vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
-  var fw = new THREE.Points(fwGeo, fwMat); fw.frustumCulled = false; fw.visible = false; scene.add(fw);
+  var fw = new THREE.Points(fwGeo, fwMat); fw.frustumCulled = false; fw.visible = false;   // фейерверк выключен (Амир 08.11), в сцену не добавляем
   var FW_COLORS = [[0.2, 0.95, 1], [1, 0.72, 0.25], [1, 1, 1], [1, 0.4, 0.65], [0.65, 1, 0.35]];
   var hatchPos = new THREE.Vector3(), carVel = new THREE.Vector3();
   function fwAdd(x, y, z, vx, vy, vz, life, c, kind) {
@@ -749,7 +749,6 @@ export function create(stage, opts) {
     if (ambOn) tAmb += dt;
     updatePassengers(dt, tAmb, dist, bank);
     carVel.copy(tmpT).multiplyScalar(clamp(dt > 0 ? dist / dt : 0, -15, 15));
-    if (updateFireworks(dt, ambOn && sGate < -8)) moved = true;
     if (updateShepherd(dt, dist, u) && inView) moved = true;
     if (ambOn) moved = true;
     tailM.emissiveIntensity = braking ? 2.6 : 0.9;
