@@ -860,3 +860,26 @@ html:has(dialog[open]) { overflow: hidden; }
 /* день 0: вывеска «Каспийск» в кадре на вертикальном экране */
 .scene:first-child img { object-position: 100% 42%; transform-origin: 88% 38%; }
 .oneday__note { margin-top: 10px; max-width: 60ch; color: var(--text-soft); }
+
+/* правки клиента 09.11 */
+.day__body p b, .day__text p b { font-weight: 700; color: inherit; }
+.guides__row { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-top: 6px; }
+.guides__row figure { border-radius: 14px; overflow: hidden; aspect-ratio: 3 / 4; background: #bcc; margin: 0; }
+.guides__row img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 25%; }
+.ccard--stay .ccard__gal { grid-template-rows: 260px 260px; }
+.ccard__gal img { cursor: zoom-in; }
+@media (max-width: 860px) { .team__guides { grid-template-columns: 1fr; } }
+@media (max-width: 560px) {
+  .guides__row { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin-inline: -28px; padding: 0 28px 6px; }
+  .guides__row figure { flex: 0 0 62%; scroll-snap-align: center; }
+  /* проживание: крупные фото листаются вбок */
+  .ccard--stay .ccard__gal { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; gap: 6px; grid-template-rows: none; }
+  .ccard--stay .ccard__gal figure, .ccard--stay .ccard__gal figure:first-child { flex: 0 0 88%; aspect-ratio: 4 / 5; scroll-snap-align: center; grid-column: auto; }
+  /* даты и оплата: крупнее */
+  .pay-steps li { font-size: 17px; line-height: 1.45; }
+  .pay-note { font-size: 16px; }
+  .pay-note a:not(.btn) { font-size: 16px; }
+  .trip__d { font-size: 21px; }
+  .trip__m { font-size: 15px; }
+  .member figure { aspect-ratio: 4 / 5; }
+}
