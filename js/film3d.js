@@ -315,6 +315,7 @@ export function create(stage, opts) {
 
   /* ---------- знаки «День N» и фото-щиты ---------- */
   var loader = new THREE.TextureLoader();
+  function fitText(c, txt, x, y, maxW, px, weight) { var f = px; do { c.font = weight + ' ' + f + 'px "Unbounded", "Golos Text", Arial'; f -= 2; } while (c.measureText(txt).width > maxW && f > 18); c.fillText(txt, x, y); }
   function textTexture(w, h, draw) { var c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d')); var t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; }
   var labels = opts.labels || [];
   var boards = [], signs = [];
@@ -352,8 +353,8 @@ export function create(stage, opts) {
     var walk = new THREE.Mesh(new THREE.BoxGeometry(9.8, 0.08, 0.7), steel); walk.position.set(0, 5.7, 0.3); gb.add(walk);
     var lampM = new THREE.MeshStandardMaterial({ color: 0xeeeeee, emissive: 0xfff2c0, emissiveIntensity: 0.6 });
     [-2.6, 0, 2.6].forEach(function (x) { var l = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.14, 0.3), lampM); l.position.set(x, 6.3, 0.55); gb.add(l); });
-    var tagTex = textTexture(512, 96, function (c) { c.fillStyle = '#ffb03b'; c.fillRect(0, 0, 512, 96); c.fillStyle = '#0f1b24'; c.font = 'bold 54px "Unbounded", "Golos Text", Arial'; c.textAlign = 'center'; c.fillText('DAG TOURS', 256, 66); });
-    var tag = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.52, 0.12), [steel, steel, steel, steel, new THREE.MeshStandardMaterial({ map: tagTex, roughness: 0.6 }), steel]);
+    var tagTex = textTexture(768, 96, function (c) { c.fillStyle = '#ffb03b'; c.fillRect(0, 0, 768, 96); c.fillStyle = '#0f1b24'; c.textAlign = 'center'; fitText(c, 'MARAT DAG TOURS', 384, 66, 728, 54, 'bold'); });
+    var tag = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.52, 0.12), [steel, steel, steel, steel, new THREE.MeshStandardMaterial({ map: tagTex, roughness: 0.6 }), steel]);
     tag.position.set(0, 11.3, 0); gb.add(tag);
     scene.add(gb); boards.push(gb);
   });
@@ -562,7 +563,7 @@ export function create(stage, opts) {
   [-12.5, 12.5].forEach(function (x) {
     gate.add(bx(0.7, 9.8, 0.7, gSteel, x, 4.9, 0, true)); gate.add(bx(0.12, 8.6, 0.74, gLight, x - Math.sign(x) * 0.36, 4.6, 0)); gate.add(bx(1.4, 0.3, 1.4, gSteel, x, 0.15, 0));
   });
-  var gateTex = textTexture(1024, 96, function (c) { c.fillStyle = '#0f1b24'; c.fillRect(0, 0, 1024, 96); c.fillStyle = '#ffb03b'; c.font = 'bold 50px "Unbounded", "Golos Text", Arial'; c.textAlign = 'center'; c.fillText('DAG TOURS  —  ДО НОВЫХ ВСТРЕЧ', 512, 65); });
+  var gateTex = textTexture(1024, 96, function (c) { c.fillStyle = '#0f1b24'; c.fillRect(0, 0, 1024, 96); c.fillStyle = '#ffb03b'; c.textAlign = 'center'; fitText(c, 'MARAT DAG TOURS — ДО НОВЫХ ВСТРЕЧ', 512, 65, 984, 50, 'bold'); });
   var beam = new THREE.Mesh(new THREE.BoxGeometry(25.7, 1.1, 0.9), [gSteel, gSteel, gSteel, gSteel, gSteel, new THREE.MeshStandardMaterial({ map: gateTex, roughness: 0.6 })]);
   beam.position.set(0, 10.1, 0); beam.castShadow = !lite; gate.add(beam);
   var curtainM = new THREE.MeshBasicMaterial({ color: 0x19b3c2, transparent: true, opacity: 0.14, side: THREE.DoubleSide, depthWrite: false });
