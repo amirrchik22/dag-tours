@@ -505,3 +505,92 @@
   if (burger) document.addEventListener('click', function (e) { if (burger.open && !e.target.closest('.nav__bar')) burger.open = false; });
 })();
 })();
+
+/* Музыка в фильме: припев играет, пока человек едет по блоку с машиной.
+   Сам звук браузер включает только после любого нажатия на странице, поэтому:
+   пробуем сами -> не дали -> кнопка «Включить звук» подсвечивается и звук стартует
+   от первого касания/клика. «Выключить» запоминаем и больше сами не включаем.
+   Файл и начало припева: атрибуты data-music и data-music-start у #road. */
+(function () {
+  var film = document.getElementById('road'); if (!film) return;
+  var btn = film.querySelector('.film__sound'), src = film.getAttribute('data-music');
+  if (!btn || !src) return;
+  var START = parseFloat(film.getAttribute('data-music-start')) || 0, VOL = 0.6, KEY = 'dt-sound';
+  var want = true; try { want = localStorage.getItem(KEY) !== 'off'; } catch (e) {}
+  var audio = null, ctx = null, gain = null, playing = false, blocked = false, inside = false, stopT = 0, fadeId = 0;
+  var label = btn.querySelector('.film__sound-t');
+  btn.hidden = false;
+
+  function setup() {
+    if (audio) return;
+    audio = new Audio(); audio.preload = 'auto'; audio.src = src + (START ? '#t=' + START : '');
+    audio.addEventListener('ended', function () { audio.currentTime = START; if (playing) audio.play().catch(function () {}); });
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) { try { ctx = new AC(); gain = ctx.createGain(); gain.gain.value = 0; ctx.createMediaElementSource(audio).connect(gain); gain.connect(ctx.destination); } catch (e) { ctx = gain = null; } }
+    if (!gain) audio.volume = 0;
+  }
+  function fade(to, sec, done) {
+    var id = ++fadeId;
+    if (gain) {
+      var t = ctx.currentTime; gain.gain.cancelScheduledValues(t); gain.gain.setValueAtTime(gain.gain.value, t); gain.gain.linearRampToValueAtTime(to, t + sec);
+      if (done) setTimeout(function () { if (id === fadeId) done(); }, sec * 1000 + 50);
+      return;
+    }
+    var from = audio.volume, t0 = performance.now();   // запасной путь без Web Audio
+    (function step(now) { if (id !== fadeId) return; var k = Math.min(1, (now - t0) / (sec * 1000)); audio.volume = from + (to - from) * k; if (k < 1) requestAnimationFrame(step); else if (done) done(); })(t0);
+  }
+  function ui() {
+    var ask = want && inside && blocked && !playing;
+    btn.classList.toggle('is-on', playing); btn.classList.toggle('is-ask', ask);
+    btn.setAttribute('aria-pressed', playing ? 'true' : 'false');
+    var txt = playing ? 'Выключить звук' : 'Включить звук';
+    btn.setAttribute('aria-label', txt); if (label) label.textContent = txt;
+  }
+  function start() {
+    setup(); clearTimeout(stopT);
+    if (playing) { fade(VOL, 1.2); return; }
+    if (ctx && ctx.state !== 'running') ctx.resume().catch(function () {});
+    var pr = audio.play();
+    var ok = function () {
+      if (ctx && ctx.state !== 'running') {   // плеер пустили, а звук держат на паузе — тогда тишина; просим нажатие
+        var done = false, fail = function () { if (done) return; done = true; audio.pause(); no(); };
+        ctx.resume().then(function () { if (done) return; if (ctx.state === 'running') { done = true; ok(); } else fail(); }, fail);
+        setTimeout(function () { if (ctx.state !== 'running') fail(); }, 500);   // без нажатия resume() молча висит
+        return;
+      }
+      playing = true; blocked = false; disarm(); fade(VOL, 2.5); ui();
+    };
+    var no = function () { blocked = true; arm(); ui(); };
+    if (pr && pr.then) pr.then(ok, no); else ok();
+  }
+  function stop(sec) {
+    if (!playing) { ui(); return; }
+    fade(0, sec, function () { audio.pause(); playing = false; ui(); });
+  }
+  // первое нажатие где угодно на странице разрешает звук
+  function onGesture(e) { if (e.target && e.target.closest && e.target.closest('.film__sound')) return; if (want && inside) start(); }
+  var armed = false, EV = ['pointerup', 'touchend', 'keydown', 'click'];
+  function arm() { if (armed) return; armed = true; EV.forEach(function (n) { document.addEventListener(n, onGesture, true); }); }
+  function disarm() { if (!armed) return; armed = false; EV.forEach(function (n) { document.removeEventListener(n, onGesture, true); }); }
+
+  btn.addEventListener('click', function () {
+    want = !playing;
+    try { localStorage.setItem(KEY, want ? 'on' : 'off'); } catch (e) {}
+    if (want) start(); else { disarm(); stop(0.6); }
+    ui();
+  });
+  function check() {
+    var r = film.getBoundingClientRect(), vh = window.innerHeight;
+    var now = !document.hidden && r.top < vh * 0.35 && r.bottom > vh * 0.65 && !film.classList.contains('film--collapsed');
+    if (now === inside) return;
+    inside = now;
+    if (inside && want) start(); else if (!inside) stop(2.2);
+    ui();
+  }
+  var tick = 0;
+  function onScroll() { if (!tick) tick = requestAnimationFrame(function () { tick = 0; check(); }); }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll);
+  document.addEventListener('visibilitychange', check);
+  check(); ui();
+})();

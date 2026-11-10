@@ -883,3 +883,24 @@ html:has(dialog[open]) { overflow: hidden; }
   .trip__m { font-size: 15px; }
   .member figure { aspect-ratio: 4 / 5; }
 }
+
+/* ---------- музыка в фильме: кнопка звука ---------- */
+.film__sound { display: inline-flex; align-items: center; gap: 8px; font: inherit; font-size: 14px; color: var(--on-dark-soft); background: none; padding: 7px 12px 7px 10px; border: 1px solid var(--line-dark); border-radius: var(--r-pill); white-space: nowrap; cursor: pointer; position: relative; transition: color 0.2s, border-color 0.2s, background 0.2s; }
+.film__sound[hidden] { display: none; }
+.film__sound-s { display: none; }
+.film__sound svg { width: 18px; height: 18px; flex: none; }
+.film__sound .film__sound-on { display: none; }
+.film__sound.is-on .film__sound-on { display: block; }
+.film__sound.is-on .film__sound-off { display: none; }
+.film__sound:hover, .film__sound.is-on { color: var(--on-dark); border-color: rgba(255, 255, 255, 0.4); }
+.film__sound.is-ask { background: var(--sun); border-color: var(--sun); color: var(--ink); }
+.film__sound.is-ask::after { content: ''; position: absolute; inset: -5px; border-radius: inherit; border: 2px solid var(--sun); animation: sound-ask 1.6s ease-out infinite; pointer-events: none; }
+@keyframes sound-ask { from { opacity: 0.9; transform: scale(0.96); } to { opacity: 0; transform: scale(1.12); } }
+@media (prefers-reduced-motion: reduce) { .film__sound.is-ask::after { animation: none; opacity: 0; } }
+@media (max-width: 700px) {
+  .film__sound { margin-left: auto; padding: 8px; }
+  .film__sound.is-ask { padding: 8px 12px 8px 10px; }
+  .film__sound .film__sound-t { display: none; }
+  .film__sound.is-ask .film__sound-s { display: inline; }
+  .film__sound:not([hidden]) + .film__skip { margin-left: 0; }
+}
