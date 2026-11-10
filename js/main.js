@@ -523,8 +523,7 @@
 
   function setup() {
     if (audio) return;
-    audio = new Audio(); audio.preload = 'auto'; audio.src = src + (START ? '#t=' + START : '');
-    audio.addEventListener('ended', function () { audio.currentTime = START; if (playing) audio.play().catch(function () {}); });
+    audio = new Audio(); audio.preload = 'auto'; audio.loop = true; audio.src = src + (START ? '#t=' + START : '');
     var AC = window.AudioContext || window.webkitAudioContext;
     if (AC) { try { ctx = new AC(); gain = ctx.createGain(); gain.gain.value = 0; ctx.createMediaElementSource(audio).connect(gain); gain.connect(ctx.destination); } catch (e) { ctx = gain = null; } }
     if (!gain) audio.volume = 0;
@@ -558,7 +557,7 @@
         setTimeout(function () { if (ctx.state !== 'running') fail(); }, 500);   // без нажатия resume() молча висит
         return;
       }
-      playing = true; blocked = false; disarm(); fade(VOL, 2.5); ui();
+      playing = true; blocked = false; disarm(); fade(VOL, 1.0); ui();   // в файле 0,9 с затишья до удара припева
     };
     var no = function () { blocked = true; arm(); ui(); };
     if (pr && pr.then) pr.then(ok, no); else ok();
