@@ -115,7 +115,7 @@
           var wa = form.querySelector('.form__err a.btn--wa');
           if (wa) {
             var txt = 'Здравствуйте! Хочу забронировать тур. Имя: ' + (data.get('name') || '') +
-              ', телефон: ' + (data.get('phone') || '') + (data.get('tg') ? ', Telegram: ' + data.get('tg') : '') + (dateText ? ', дата: ' + dateText : '') +
+              ', телефон: ' + (data.get('phone') || '') + (data.get('tg') ? ', связь: ' + data.get('tg') : '') + (dateText ? ', дата: ' + dateText : '') +
               (data.get('direction') ? ', направление: ' + data.get('direction') : '');
             wa.href = 'https://wa.me/79041606202?text=' + encodeURIComponent(txt);
           }
